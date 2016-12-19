@@ -1,0 +1,36 @@
+FROM ubuntu:16.04
+
+MAINTAINER Nik Spirin <spirinus gmail com>
+
+RUN apt-get update --fix-missing && apt-get install -y \
+    git \
+    wget \
+    bzip2 \
+    vim \
+    g++ \
+    nano \
+    python-setuptools \
+    make
+
+RUN wget --quiet https://repo.continuum.io/archive/Anaconda2-4.2.0-Linux-x86_64.sh -O ~/anaconda.sh && \
+    /bin/bash ~/anaconda.sh -b -p /opt/conda && \
+    rm ~/anaconda.sh && \
+    echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh
+
+ENV PATH /opt/conda/bin:$PATH
+
+RUN pip install --upgrade pip && \
+    pip install scikit-learn --upgrade && \
+    pip install numpy --upgrade && \
+    pip install pymystem3
+
+# Install awesome XGBoost from sources
+RUN git clone --recursive https://github.com/dmlc/xgboost && \
+    cd xgboost && make -j4 && \
+    cd python-package && python setup.py install && \
+    export PYTHONPATH=~/xgboost/python-package && \
+    conda install libgcc -y
+
+RUN mkdir /jupyter
+
+CMD bash -c "jupyter notebook --port=8888 --ip=* --notebook-dir='/jupyter'"
